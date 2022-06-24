@@ -14,7 +14,7 @@ import it.polito.tdp.crimes.model.Evento.EventType;
 public class Simulatore {
 	// Tipi di evento
 	// 1) Evento criminoso (modellato dalla classe Event) 
-	// 	  1.1 La centrale seleziona l'agente libero più vicini 
+	// 	  1.1 La centrale seleziona l'agente libero più vicino
 	// 	  1.2 Se non c'è nessuno disponibile in quel momento l'evento è MAL GESTITO
 	//	  1.3 Se c'è un agente libero allora setto l'agente ad occupato
 	// 2) L'agente selezionato ARRIVA sul posto
@@ -54,7 +54,8 @@ public class Simulatore {
 			agenti.put(d, 0);
 		}
 		
-		// Devo scegliere dov'è la centrale e mettere N agenti in quel distretto
+		// Devo scegliere dov'è la centrale e mettere N agenti in quel distretto. Dalla centrale partiranno poi gli agenti per andare nei
+		// distretti in cui si verifica un certo evento
 		EventsDao dao = new EventsDao();
 		Integer minD = dao.getDistrettoMin(anno); // Distretto a minore criminalità nell'anno selezionato dall'utente
 		agenti.put(minD, N); // In questo distretto andiamo a mettere gli N agenti inizialmente in centrale
@@ -63,7 +64,6 @@ public class Simulatore {
 		queue = new PriorityQueue<Evento>();
 		
 		for(Event event : dao.listAllEventsByDate(anno, mese, giorno)) {
-			// Non inserisco direttamente l'event
 			queue.add(new Evento(EventType.CRIMINE, event.getReported_date(), event));
 		}
 	}
@@ -75,7 +75,7 @@ public class Simulatore {
 				case CRIMINE:
 					System.out.println("NUOVO CRIMINE! " + e.getCrimine().getIncident_id());
 					
-					// Cerco l'agente libero più vicino 
+					// Cerco l'agente libero più vicino al distretto in cui si è verificato il crimine
 					Integer partenza = null;
 					partenza = cercaAgente(e.getCrimine().getDistrict_id()); // Metodo che mi da il distretto da cui partirà l'agente
 					if(partenza != null) {
@@ -105,7 +105,7 @@ public class Simulatore {
 					Long duration = getDurata(e.getCrimine().getOffense_category_id());
 					queue.add(new Evento(EventType.GESTITO, e.getData().plusSeconds(duration), e.getCrimine()));
 					
-					// Controllo se il crimine è mal gestito
+					// Controllo se il crimine è mal gestito, ossia se l'agente arriva con un ritardo di 15 minuti
 					if(e.getData().isAfter(e.getCrimine().getReported_date().plusMinutes(15))) {
 						System.out.println("CRIMINE " + e.getCrimine().getIncident_id() + " MAL GESTITO");
 						malGestiti++;
@@ -147,7 +147,7 @@ public class Simulatore {
 			// Prima di sovrascrivere la distanza migliore devo chiedermi se ci sono agenti disponibili nel disretto
 			if(agenti.get(d) > 0) {
 				if(district_id.equals(d)) {
-					// La distanza sarà 0
+					// La distanza sarà 0 se siamo nello stesso distretto
 					distanza = 0.0;
 					distretto = d;
 				}
